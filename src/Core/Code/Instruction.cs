@@ -41,6 +41,8 @@ namespace Reko.Core.Code
 
         public abstract T Accept<T>(InstructionVisitor<T> visitor);
 
+        public abstract T Accept<T, C>(InstructionVisitor<T, C> visitor, C ctx);
+
 		public abstract bool IsControlFlow { get; }
 
         /// <summary>
@@ -90,6 +92,10 @@ namespace Reko.Core.Code
             return visitor.VisitDefInstruction(this);
         }
 
+        public override T Accept<T, C>(InstructionVisitor<T, C> visitor, C ctx)
+        {
+            return visitor.VisitDefInstruction(this, ctx);
+        }
 
         public override void Accept(InstructionVisitor v)
 		{
@@ -130,7 +136,12 @@ namespace Reko.Core.Code
             return visitor.VisitReturnInstruction(this);
         }
 
-		public override void Accept(InstructionVisitor v)
+        public override T Accept<T, C>(InstructionVisitor<T, C> visitor, C ctx)
+        {
+            return visitor.VisitReturnInstruction(this, ctx);
+        }
+
+        public override void Accept(InstructionVisitor v)
 		{
 			v.VisitReturnInstruction(this);
 		}
@@ -167,7 +178,12 @@ namespace Reko.Core.Code
             return visitor.VisitUseInstruction(this);
         }
 
-		public override void Accept(InstructionVisitor v)
+        public override T Accept<T, C>(InstructionVisitor<T, C> visitor, C ctx)
+        {
+            return visitor.VisitUseInstruction(this, ctx);
+        }
+
+        public override void Accept(InstructionVisitor v)
 		{
 			v.VisitUseInstruction(this);
 		}

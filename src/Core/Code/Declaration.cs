@@ -1,6 +1,6 @@
 #region License
 /* 
- * Copyright (C) 1999-2020 John Källén.
+ * Copyright (C) 1999-2020 John KÃ¤llÃ©n.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,7 +49,12 @@ namespace Reko.Core.Code
 			v.VisitDeclaration(this);
 		}
 
-		public Expression Expression { get; set; }
+        public override T Accept<T, C>(InstructionVisitor<T, C> visitor, C ctx)
+        {
+            return visitor.VisitDeclaration(this, ctx);
+        }
+
+        public Expression Expression { get; set; }
 
 		public override bool IsControlFlow
 		{

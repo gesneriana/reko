@@ -1,4 +1,4 @@
-﻿#region License
+#region License
 /* 
  * Copyright (C) 1999-2020 John Källén.
  *
@@ -54,6 +54,11 @@ namespace Reko.Core.Code
         public override T Accept<T>(InstructionVisitor<T> visitor)
         {
             return visitor.VisitComment(this);
+        }
+
+        public override T Accept<T, C>(InstructionVisitor<T, C> visitor, C ctx)
+        {
+            return visitor.VisitComment(this, ctx);
         }
     }
 }
