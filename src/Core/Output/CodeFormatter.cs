@@ -598,13 +598,8 @@ namespace Reko.Core.Output
 			writer.Indent();
             Debug.Assert(decl.Identifier.DataType != null, "The DataType property can't ever be null");
 
-#if OLD
-            TypeFormatter tf = new TypeFormatter(writer, true);
-            tf.Write(decl.Identifier.DataType, decl.Identifier.Name);
-#else
-            TypeReferenceFormatter tf = new TypeReferenceFormatter(writer);
+            var tf = new TypeReferenceFormatter(writer);
             tf.WriteDeclaration(decl.Identifier.DataType, decl.Identifier.Name);
-#endif
             if (decl.Expression != null)
 			{
 				writer.Write(" = ");
