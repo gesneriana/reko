@@ -71,6 +71,7 @@ namespace Reko.Analysis
             DetermineNeededSlices();
             GenerateNeededSlices();
             ReplaceSlices();
+            ssa.Validate(e => { ssa.Procedure.Dump(true); });
         }
 
         private void DetermineNeededSlices()
@@ -113,7 +114,7 @@ namespace Reko.Analysis
                 // the original size of needed.Key. We can create a smaller 
                 // identifier, and replace all uses of the original wide variable
                 // with the new narrower identifier.
-
+                trace.Verbose("SLP: Id {0} is only used with bitrange {1}", sidOld.Identifier, brNeeded);
                 // We need a smaller slice. Does it already exist?
                 if (this.availableSlices[sidOld].TryGetValue(brNeeded, out var sidNew))
                 {
@@ -168,7 +169,8 @@ namespace Reko.Analysis
             foreach (var stm in ssa.Procedure.Statements)
             {
                 slicePusher.Statement = stm;
-                stm.Instruction = stm.Instruction.Accept(slicePusher);
+                var instrNew = stm.Instruction.Accept(slicePusher);
+                stm.Instruction = instrNew;
             }
         }
 
@@ -553,7 +555,7 @@ namespace Reko.Analysis
             {
                 var callee = ci.Callee.Accept(this, Ctx(ci.Callee));
                 var uses = new List<CallBinding>();
-                foreach (var use in ci.Uses)
+                foreach (var use in ci.Uses) 
                 {
                     var e = use.Expression.Accept(this, Ctx(use.Expression));
                     uses.Add(new CallBinding(use.Storage, e) { BitRange = use.BitRange });
@@ -571,7 +573,7 @@ namespace Reko.Analysis
 
             public Instruction VisitDeclaration(Declaration decl)
             {
-                throw new NotImplementedException();
+                return decl;
             }
 
             public Instruction VisitDefInstruction(DefInstruction def)
@@ -580,6 +582,7 @@ namespace Reko.Analysis
                 var sidDst = outer.ssa.Identifiers[def.Identifier];
                 if (outer.replaceIds.TryGetValue(sidDst, out var sidDstNew))
                 {
+                    trace.Verbose("SLP: Replacing def {0} with {1}", sidDst.Identifier, sidDstNew.Identifier);
                     sidDstNew.DefStatement = Statement;
                     sidDst.DefStatement = null;
                     sidDst.DefExpression = null;
@@ -616,15 +619,18 @@ namespace Reko.Analysis
                 var sidDst = outer.ssa.Identifiers[phi.Dst];
                 if (outer.replaceIds.TryGetValue(sidDst, out var sidDstNew))
                 {
+
                     sidDstNew.DefStatement = this.Statement;
                     sidDstNew.DefExpression = phiFn;
                     sidDst.DefStatement = null;
                     sidDst.DefExpression = null;
+                    trace.Verbose("SLP: Replacing {0} with {1}={2}", phi, sidDstNew.Identifier, phiFn);
                     return new PhiAssignment(sidDstNew.Identifier, phiFn);
                 }
                 else
                 {
                     sidDst.DefExpression = phiFn;
+                    trace.Verbose("SLP: Replacing {0} with {1}={2}", phi, phi.Dst, phiFn);
                     return new PhiAssignment(phi.Dst, phiFn);
                 }
             }
@@ -690,9 +696,9 @@ namespace Reko.Analysis
 
             public Expression VisitBinaryExpression(BinaryExpression binExp, NarrowContext ctx)
             {
-                DataType dt = binExp.DataType;
-                Expression left = binExp.Left;
+                Expression left;
                 Expression right = binExp.Right;
+                DataType dt = binExp.DataType;
                 switch (binExp.Operator)
                 {
                 case IAddOperator _:
@@ -1002,6 +1008,11 @@ namespace Reko.Analysis
             {
                 return obj is NarrowContext that &&
                     this.Bitrange.Equals(that.Bitrange);
+            }
+
+            public override string ToString()
+            {
+                return $"{DataType}: {this.Bitrange}";
             }
         }
     }

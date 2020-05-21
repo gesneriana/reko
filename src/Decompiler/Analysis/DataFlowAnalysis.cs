@@ -212,6 +212,9 @@ namespace Reko.Analysis
                 var prj = new ProjectionPropagator(ssa, sac);
                 prj.Transform();
                 DumpWatchedProcedure("After projection propagation", ssa.Procedure);
+                var slp = new SlicePropagator(ssa, this.eventListener);
+                slp.Transform();
+                DumpWatchedProcedure("After slice propagation", ssa.Procedure);
             }
 
             var uid = new UsedRegisterFinder(flow, procs, this.eventListener);
@@ -512,7 +515,7 @@ namespace Reko.Analysis
         [Conditional("DEBUG")]
         public static void DumpWatchedProcedure(string caption, Procedure proc)
         {
-            if (proc.Name == "fn00404134")
+            if (proc.Name == "fn0C00_000A" || proc.Name == "fn0C00_0000")
             {
                 Debug.Print("// {0}: {1} ==================", proc.Name, caption);
                 //MockGenerator.DumpMethod(proc);
