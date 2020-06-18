@@ -598,5 +598,25 @@ namespace Reko.UnitTests.Typing
             });
             RunTest(pp.BuildProgram(), $"Typing/{nameof(TtranArrayAssignment)}.txt");
         }
+
+        [Test]
+        [Category(Categories.IntegrationTests)]
+        public void TtranGithubIssue879()
+        {
+            var pp = new ProgramBuilder();
+            pp.Add(nameof(TtranGithubIssue879), m =>
+            {
+                Identifier ds = m.Reg16("ds", 42);
+                m.SStore(ds, m.Word16(0x118),
+                    m.SegMem8(
+                        ds,
+                        m.IAdd(
+                            m.Cast(PrimitiveType.UInt16, m.Cast(PrimitiveType.UInt8,
+                                m.SegMem8(ds, m.Word16(0x94)))),
+                            m.Word16(0x95))));
+
+            });
+            RunTest(pp.BuildProgram(), $"Typing/{nameof(TtranGithubIssue879)}.txt");
+        }
     }
 }
