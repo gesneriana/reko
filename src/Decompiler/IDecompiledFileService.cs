@@ -28,6 +28,7 @@ using Reko.Core.Services;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
+using Reko.Core.Pascal;
 
 namespace Reko
 {
@@ -101,10 +102,12 @@ namespace Reko
     public class DecompiledFileService : IDecompiledFileService
     {
         private readonly IFileSystemService fsSvc;
+        private readonly DecompilerEventListener listener;
 
-        public DecompiledFileService(IFileSystemService fsSvc)
+        public DecompiledFileService(IFileSystemService fsSvc, DecompilerEventListener listener)
         {
             this.fsSvc = fsSvc;
+            this.listener = listener;
         }
 
         public TextWriter CreateTextWriter(string filename)
@@ -134,7 +137,7 @@ namespace Reko
         public void WriteIntermediateCode(Program program, Action<string, IEnumerable<object>, TextWriter> writer)
         {
             var outputPolicy = program.CreateOutputPolicy();
-            foreach (var placement in outputPolicy.GetProcedurePlacements(".dis"))
+            foreach (var placement in outputPolicy.GetProcedurePlacements(".dis", listener))
             {
                 var irFilename = Path.GetFileName(placement.Key);
                 var irPath = Path.Combine(program.SourceDirectory, irFilename);
@@ -158,7 +161,7 @@ namespace Reko
         public void WriteDecompiledCode(Program program, Action<string, IEnumerable<object>, TextWriter> writer)
         {
             var outputPolicy = program.CreateOutputPolicy();
-            foreach (var placement in outputPolicy.GetProcedurePlacements(".c"))
+            foreach (var placement in outputPolicy.GetProcedurePlacements(".c", listener))
             {
                 var filename = placement.Key;
                 var filePath = Path.Combine(program.SourceDirectory, filename);

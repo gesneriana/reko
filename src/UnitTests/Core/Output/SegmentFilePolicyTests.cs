@@ -21,6 +21,7 @@
 using NUnit.Framework;
 using Reko.Core;
 using Reko.Core.Output;
+using Reko.UnitTests.Mocks;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -33,6 +34,7 @@ namespace Reko.UnitTests.Core.Output
     [TestFixture]
     public class SegmentFilePolicyTests
     {
+        private FakeDecompilerEventListener listener;
         private Program program;
 
         [SetUp]
@@ -41,6 +43,7 @@ namespace Reko.UnitTests.Core.Output
             var segs = new SegmentMap(Address.Ptr32(0x00100000));
             var sc = new ServiceContainer();
             var platform = new Mocks.FakePlatform(sc, new Mocks.FakeArchitecture(sc));
+            this.listener = new FakeDecompilerEventListener();
             this.program = new Program(segs, platform.Architecture, platform)
             {
                 Name = "myprogram.exe"
@@ -83,7 +86,7 @@ namespace Reko.UnitTests.Core.Output
             Given_Procedure(0x00101000);
 
             var ofp = new SegmentFilePolicy(program);
-            var placements = ofp.GetProcedurePlacements(".asm").ToArray();
+            var placements = ofp.GetProcedurePlacements(".asm", listener).ToArray();
             Assert.AreEqual(1, placements.Length);
             Assert.AreEqual("myprogram_text.asm", placements[0].Key);
             var procs = placements[0].Value;
@@ -99,7 +102,7 @@ namespace Reko.UnitTests.Core.Output
             Given_Procedure(0x00101400);
 
             var ofp = new SegmentFilePolicy(program);
-            var placements = ofp.GetProcedurePlacements(".asm").ToArray();
+            var placements = ofp.GetProcedurePlacements(".asm", listener).ToArray();
             Assert.AreEqual(1, placements.Length);
             Assert.AreEqual("myprogram_text.asm", placements[0].Key);
             var procs = placements[0].Value.Values.Cast<Procedure>().ToArray();
@@ -117,7 +120,7 @@ namespace Reko.UnitTests.Core.Output
             Given_Procedure(0x00201400);
 
             var ofp = new SegmentFilePolicy(program);
-            var placements = ofp.GetProcedurePlacements(".asm").ToArray();
+            var placements = ofp.GetProcedurePlacements(".asm", listener).ToArray();
             Assert.AreEqual(2, placements.Length);
             Assert.AreEqual("myprogram_text.asm", placements[0].Key);
             Assert.AreEqual("myprogram_init.asm", placements[1].Key);
@@ -140,7 +143,7 @@ namespace Reko.UnitTests.Core.Output
             Given_Procedure(0x00133F00);
 
             var ofp = new SegmentFilePolicy(program);
-            var placements = ofp.GetProcedurePlacements(".asm").ToArray();
+            var placements = ofp.GetProcedurePlacements(".asm", listener).ToArray();
             Assert.AreEqual(3, placements.Length);
             Assert.AreEqual("myprogram_text_0000.asm", placements[0].Key);
             Assert.AreEqual("myprogram_text_0001.asm", placements[1].Key);
@@ -158,7 +161,7 @@ namespace Reko.UnitTests.Core.Output
             Given_UserProcedure(0x00101000, "myproc", "myproc.c");
 
             var ofp = new SegmentFilePolicy(program);
-            var placements = ofp.GetProcedurePlacements(".asm").ToArray();
+            var placements = ofp.GetProcedurePlacements(".asm", listener).ToArray();
             Assert.AreEqual(2, placements.Length);
             Assert.AreEqual("myproc.asm", placements[0].Key);
             Assert.AreEqual("myprogram_text.asm", placements[1].Key);

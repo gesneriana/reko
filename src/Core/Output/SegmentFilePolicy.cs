@@ -19,6 +19,7 @@
 #endregion
 
 using Reko.Core.Lib;
+using Reko.Core.Services;
 using Reko.Core.Types;
 using System;
 using System.Collections.Generic;
@@ -46,7 +47,9 @@ namespace Reko.Core.Output
             this.defaultFile = "";
         }
 
-        public override Dictionary<string, IDictionary<Address, object>> GetProcedurePlacements(string fileExtension)
+        public override Dictionary<string, IDictionary<Address, object>> GetProcedurePlacements(
+            string fileExtension,
+            DecompilerEventListener listener)
         {
             // Default file if we cannot find segment.
             this.defaultFile = Path.ChangeExtension(program.Name, fileExtension);
@@ -83,7 +86,18 @@ namespace Reko.Core.Output
                             objects = new BTreeDictionary<Address, object>();
                             result.Add(filename, objects);
                         }
-                        objects.Add(addrField, field);
+                        if (objects.TryGetValue(addrField, out object old))
+                        {
+                            if (old is Procedure)
+                                continue;
+                            listener.Warn(
+                                listener.CreateAddressNavigator(program, addrField),
+                                $"Duplicate data field {field.Name} at address {addrField}.");
+                        }
+                        else
+                        {
+                            objects.Add(addrField, field);
+                        }
                     }
                 }
             }
